@@ -1,28 +1,54 @@
+using Pulse.Server;
 
-namespace Pulse.Server;
+using Serilog;
 
-public class Program
+
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "production";
+var appName = Assembly.GetExecutingAssembly().GetName().Name;
+var serviceVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
+
+
+var appNameVersioned = $"{appName}-{environment} ({serviceVersion})";
+
+Log.Logger = new LoggerConfiguration()
+    .Enrich.WithProperty("service", appName)
+    .Enrich.WithProperty("environment", environment)
+    .WriteTo.Console()
+    .CreateLogger();
+
+Log.Information("{AppName} Starting Up....", appNameVersioned);
+
+try
 {
-    public static void Main(string[] args)
+    var builder = WebApplication.CreateBuilder(args);
+
+
+    builder.Host.UseSerilog((context, lc) =>
     {
-        var builder = WebApplication.CreateBuilder(args);
+        lc.ReadFrom.Configuration(context.Configuration);
+    });
 
-        // Add services to the container.
-        builder.Services.AddAuthorization();
+    builder.Host.UseDefaultServiceProvider((context, options) =>
+    {
+        options.ValidateScopes = true;
+        options.ValidateOnBuild = true;
+    });
 
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();
+    var app = builder.ConfigureServices()
+                     .ConfigurePipeline();
 
-        var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapOpenApi();
-        }
+    await app.StartAsync();
 
-        app.UseAuthorization();
+    await app.WaitForShutdownAsync();
 
-        app.Run();
-    }
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "{AppName} terminated unexpectedly", appNameVersioned);
+}
+finally
+{
+    Log.Information("{AppName} Shut down complete", appName);
+    await Log.CloseAndFlushAsync();
 }

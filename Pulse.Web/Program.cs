@@ -2,7 +2,7 @@ using Pulse.Web.Components;
 
 namespace Pulse.Web;
 
-public class Program
+public static class Program
 {
     public static void Main(string[] args)
     {
