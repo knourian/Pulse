@@ -732,4 +732,13 @@ obj/
 # End of https://www.toptal.com/developers/gitignore/api/csharp,visualstudio,visualstudiocode,dotnetcore,aspnetcore
 
 
+#Logs
 logs/
+
+# database files
+*.db
+
+# Local environment secrets
+.env
+.env.*
+!.env.example

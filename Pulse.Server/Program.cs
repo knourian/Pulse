@@ -43,6 +43,10 @@ try
     await app.WaitForShutdownAsync();
 
 }
+catch (Microsoft.Extensions.Hosting.HostAbortedException)
+{
+    // Expected when EF Core tools run design-time operations (e.g., Update-Database).
+}
 catch (Exception ex)
 {
     Log.Fatal(ex, "{AppName} terminated unexpectedly", appNameVersioned);
