@@ -20,9 +20,7 @@ public class AgentIdentityStore
 
     public AgentIdentityStore(IOptions<AppSetting> settings)
     {
-        _directoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                                      "Pulse",
-                                      "Agent");
+        _directoryPath = Path.Combine(Environment.CurrentDirectory, "Config");
         _filePath = Path.Combine(_directoryPath, "agent.json");
 
         var secret = settings.Value.Agent.IdentityEncryptionKey;

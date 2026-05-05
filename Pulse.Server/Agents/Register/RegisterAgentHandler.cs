@@ -14,9 +14,7 @@ public class RegisterAgentHandler : IEndpointHandler
         _agents = agents;
     }
 
-    public async Task<RegisterAgentResponse> HandleAsync(
-        RegisterAgentRequest request,
-        CancellationToken ct)
+    public async Task<RegisterAgentResponse> HandleAsync(RegisterAgentRequest request, CancellationToken ct)
     {
 
         var existing = await _agents.GetByMachineIdAsync(request.MachineId, ct);
@@ -39,6 +37,7 @@ public class RegisterAgentHandler : IEndpointHandler
         {
             Id = Guid.NewGuid().ToString("N"),
             Hostname = request.Hostname.Trim().ToLowerInvariant(),
+            MachineId = request.MachineId,
             ApiKey = GenerateApiKey(),
             LastSeenUtc = DateTime.UtcNow
         };
