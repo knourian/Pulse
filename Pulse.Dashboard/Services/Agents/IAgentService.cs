@@ -1,6 +1,6 @@
 using Pulse.Contracts.Agents;
 
-namespace Pulse.Web.Services.Agents;
+namespace Pulse.Dashboard.Services.Agents;
 
 public interface IAgentService
 {

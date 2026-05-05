@@ -3,6 +3,7 @@
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
 		<BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+		<NoWarn>$(NoWarn);S6966</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>

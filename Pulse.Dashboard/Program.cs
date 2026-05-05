@@ -1,4 +1,4 @@
-using Pulse.Web;
+using Pulse.Dashboard;
 
 using Serilog;
 

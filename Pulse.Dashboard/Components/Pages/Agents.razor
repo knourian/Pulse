@@ -1,5 +1,5 @@
-@page "/Agents"
-@using Pulse.Web.Services.Agents
+@page "/agents"
+@using Pulse.Dashboard.Services.Agents
 @implements IDisposable
 @inject IAgentService AgentService
 
@@ -79,6 +79,7 @@ else
         }
         catch (OperationCanceledException)
         {
+            // Operation Canceled, do nothing
         }
         catch (Exception ex)
         {

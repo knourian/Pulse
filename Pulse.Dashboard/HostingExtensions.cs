@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Options;
 
-using Pulse.Web.Components;
-using Pulse.Web.Models;
-using Pulse.Web.Services.Agents;
+using Pulse.Dashboard.Components;
+using Pulse.Dashboard.Models;
+using Pulse.Dashboard.Services.Agents;
 
-namespace Pulse.Web;
+namespace Pulse.Dashboard;
 
 public static class HostingExtensions
 {

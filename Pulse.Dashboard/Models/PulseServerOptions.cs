@@ -1,4 +1,4 @@
-namespace Pulse.Web.Models;
+namespace Pulse.Dashboard.Models;
 
 public sealed class PulseServerOptions
 {

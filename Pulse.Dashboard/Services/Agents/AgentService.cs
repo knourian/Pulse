@@ -1,7 +1,7 @@
 using Pulse.Contracts.Agents;
 using Pulse.Contracts.Common;
 
-namespace Pulse.Web.Services.Agents;
+namespace Pulse.Dashboard.Services.Agents;
 
 public sealed class AgentService(HttpClient httpClient, ILogger<AgentService> logger) : IAgentService
 {
