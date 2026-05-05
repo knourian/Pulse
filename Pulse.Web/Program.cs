@@ -1,36 +1,46 @@
-using Pulse.Web.Components;
+using Pulse.Web;
 
-namespace Pulse.Web;
+using Serilog;
 
-public static class Program
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "production";
+var appName = Assembly.GetExecutingAssembly().GetName().Name;
+var serviceVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
+
+var appNameVersioned = $"{appName}-{environment} ({serviceVersion})";
+
+Log.Logger = new LoggerConfiguration()
+    .Enrich.WithProperty("service", appName)
+    .Enrich.WithProperty("environment", environment)
+    .WriteTo.Console()
+    .CreateLogger();
+
+Log.Information("{AppName} Starting Up....", appNameVersioned);
+
+try
 {
-    public static void Main(string[] args)
-    {
-        var builder = WebApplication.CreateBuilder(args);
+    var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
-        builder.Services.AddRazorComponents()
-            .AddInteractiveServerComponents();
+    builder.Host.UseDefaultServiceProvider((context, options) =>
+{
+    options.ValidateScopes = true;
+    options.ValidateOnBuild = true;
+});
 
-        var app = builder.Build();
+    var app = builder.ConfigureServices()
+                     .ConfigurePipeline();
 
-        // Configure the HTTP request pipeline.
-        if (!app.Environment.IsDevelopment())
-        {
-            app.UseExceptionHandler("/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-            app.UseHsts();
-        }
 
-        app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-        app.UseHttpsRedirection();
+    await app.StartAsync();
 
-        app.UseAntiforgery();
+    await app.WaitForShutdownAsync();
+}
 
-        app.MapStaticAssets();
-        app.MapRazorComponents<App>()
-            .AddInteractiveServerRenderMode();
-
-        app.Run();
-    }
+catch (Exception ex)
+{
+    Log.Fatal(ex, "{AppName} terminated unexpectedly", appNameVersioned);
+}
+finally
+{
+    Log.Information("{AppName} Shut down complete", appName);
+    await Log.CloseAndFlushAsync();
 }
