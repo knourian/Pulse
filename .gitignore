@@ -737,6 +737,8 @@ logs/
 
 # database files
 *.db
+*.db-shm
+*.db-wal
 
 # Local environment secrets
 .env

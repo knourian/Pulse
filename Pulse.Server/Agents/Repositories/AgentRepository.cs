@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+using Pulse.Contracts.Agents;
 using Pulse.Server.Agents.Entities;
 using Pulse.Server.Data;
 
@@ -37,5 +38,17 @@ public class AgentRepository : IAgentRepository
     public Task SaveChangesAsync(CancellationToken ct)
     {
         return _db.SaveChangesAsync(ct);
+    }
+
+    public async Task<IEnumerable<AgentDto>> GetAllAsync(CancellationToken ct)
+    {
+        var result = await _db.Agents.AsNoTracking().Select(x => new AgentDto
+        {
+            Id = x.Id,
+            Hostname = x.Hostname,
+            LastSeenUtc = x.LastSeenUtc
+        }).ToListAsync(ct);
+
+        return result;
     }
 }
