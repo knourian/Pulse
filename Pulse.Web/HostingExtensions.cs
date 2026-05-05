@@ -1,5 +1,8 @@
+using Microsoft.Extensions.Options;
+
 using Pulse.Web.Components;
 using Pulse.Web.Models;
+using Pulse.Web.Services.Agents;
 
 namespace Pulse.Web;
 
@@ -17,6 +20,15 @@ public static class HostingExtensions
             .Validate(s => Uri.TryCreate(s.PulseServer.BaseUrl, UriKind.Absolute, out _),
                             "Invalid 'PulseServer:BaseUrl'.")
             .ValidateOnStart();
+
+
+        builder.Services.AddHttpClient<IAgentService, AgentService>((sp, http) =>
+        {
+            var settings = sp.GetRequiredService<IOptions<AppSetting>>().Value;
+
+            http.BaseAddress = new Uri(settings.PulseServer.BaseUrl, UriKind.Absolute);
+            http.Timeout = TimeSpan.FromSeconds(30);
+        });
 
 
         return builder.Build();
