@@ -20,6 +20,7 @@ public static class HostingExtensions
 
         builder.Services.AddAuthorization();
         builder.Services.AddOpenApi();
+
         builder.Services.AddDatabase();
 
         builder.Services.AddHandlers(typeof(Program).Assembly);
@@ -79,6 +80,11 @@ public static class HostingExtensions
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
+
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/openapi/v1.json", "v1");
+            });
         }
 
         app.Map("/", () =>
