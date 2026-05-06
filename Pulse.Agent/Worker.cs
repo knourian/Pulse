@@ -9,17 +9,24 @@ public class Worker : BackgroundService
 {
     private readonly AgentRegistrationService _registrationService;
     private readonly AgentIdentityStore _identityStore;
+    private readonly CheckProviderService _checkProvider;
+    private readonly CheckScheduler _scheduler;
+
     private readonly ILogger<Worker> _logger;
     private readonly AppSetting _settings;
 
     public Worker(IOptions<AppSetting> settings,
                   AgentRegistrationService registrationService,
                   AgentIdentityStore identityStore,
+                  CheckProviderService checkProviderService,
+                  CheckScheduler scheduler,
                   ILogger<Worker> logger)
     {
         _settings = settings.Value;
         _registrationService = registrationService;
         _identityStore = identityStore;
+        _checkProvider = checkProviderService;
+        _scheduler = scheduler;
         _logger = logger;
     }
 
@@ -46,6 +53,10 @@ public class Worker : BackgroundService
         {
             while (await timer.WaitForNextTickAsync(stoppingToken))
             {
+                var checks = await _checkProvider.GetChecksAsync(identity, stoppingToken);
+
+                _scheduler.Sync(checks);
+
                 _logger.LogInformation("Worker heartbeat at: {Time}", DateTimeOffset.UtcNow);
             }
         }
