@@ -21,38 +21,40 @@ public static class HostingExtensions
         .ValidateOnStart();
 
         builder.Services.AddSingleton<AgentIdentityStore>();
-        builder.Services.AddHttpClient<AgentRegistrationService>((sp, http) =>
-        {
-            var settings = sp.GetRequiredService<IOptions<AppSetting>>().Value;
-
-            http.BaseAddress = new Uri(settings.PulseServer.BaseUrl, UriKind.Absolute);
-            http.Timeout = TimeSpan.FromSeconds(30);
-        });
-
-        builder.Services.AddSingleton<CheckProviderService>();
-        builder.Services.AddHttpClient<CheckProviderService>((sp, http) =>
-        {
-            var settings = sp.GetRequiredService<IOptions<AppSetting>>().Value;
-
-            http.BaseAddress = new Uri(settings.PulseServer.BaseUrl, UriKind.Absolute);
-            http.Timeout = TimeSpan.FromSeconds(30);
-        });
-
         builder.Services.AddSingleton<CheckScheduler>();
 
-        builder.Services.AddTransient<HttpCheckExecutor>();
+        builder.Services.AddHttpClient<AgentRegistrationService>(HttpClientConfiguration());
+        builder.Services.AddHttpClient<CheckProviderService>(HttpClientConfiguration());
+
         builder.Services.AddHttpClient<HttpCheckExecutor>();
 
         builder.Services.AddTransient<TcpCheckExecutor>();
         builder.Services.AddTransient<PingCheckExecutor>();
-
         builder.Services.AddTransient<ICheckExecutorFactory, CheckExecutorFactory>();
 
-        //builder.Services.AddScoped<IResultSender, ResultSender>();
+        builder.Services.AddHttpClient("PulseServer", HttpClientConfiguration());
+
+        builder.Services.AddSingleton<IResultSender>(sp =>
+        {
+            var http = sp.GetRequiredService<IHttpClientFactory>().CreateClient("PulseServer");
+            var logger = sp.GetRequiredService<ILogger<ResultSender>>();
+            return new ResultSender(http, logger);
+        });
 
         builder.Services.AddHostedService<Worker>();
 
 
         return builder;
+    }
+
+    private static Action<IServiceProvider, HttpClient> HttpClientConfiguration()
+    {
+        return (sp, http) =>
+        {
+            var settings = sp.GetRequiredService<IOptions<AppSetting>>().Value;
+
+            http.BaseAddress = new Uri(settings.PulseServer.BaseUrl, UriKind.Absolute);
+            http.Timeout = TimeSpan.FromSeconds(30);
+        };
     }
 }
