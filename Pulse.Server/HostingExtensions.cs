@@ -24,6 +24,9 @@ public static class HostingExtensions
 
         builder.Services.AddDatabase();
 
+        builder.Services.AddProblemDetails();
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
         builder.Services.AddHandlers(typeof(Program).Assembly);
         builder.Services.AddEndpoints(typeof(Program).Assembly);
 
@@ -78,6 +81,8 @@ public static class HostingExtensions
 
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
+        app.UseExceptionHandler();
+
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
