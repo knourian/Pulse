@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using Pulse.Server.Agents.Entities;
+using Pulse.Server.CheckRuns.Entities;
 using Pulse.Server.Checks.Entities;
 using Pulse.Server.Extensions;
 
@@ -19,6 +20,7 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<Agent> Agents { get; set; }
-
     public DbSet<Check> Checks { get; set; }
+
+    public DbSet<CheckResult> Results { get; set; }
 }
