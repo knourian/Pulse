@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 using Pulse.Server.Agents.Repositories;
+using Pulse.Server.CheckRuns.Repositories;
 using Pulse.Server.Checks.Repositories;
 using Pulse.Server.Common;
 using Pulse.Server.Data;
@@ -45,6 +46,7 @@ public static class HostingExtensions
 
         services.AddScoped<IAgentRepository, AgentRepository>();
         services.AddScoped<ICheckRepository, CheckRepository>();
+        services.AddScoped<ICheckResultRepository, CheckResultRepository>();
 
         return services;
     }
