@@ -90,6 +90,9 @@ public class CheckScheduler
 
         var executorFactory = scope.ServiceProvider.GetRequiredService<ICheckExecutorFactory>();
         var resultSender = scope.ServiceProvider.GetRequiredService<IResultSender>();
+        var identityStore = scope.ServiceProvider.GetRequiredService<AgentIdentityStore>();
+
+        var identity = await identityStore.LoadAsync(ct);
 
         var executor = executorFactory.Create(check.Type);
 
@@ -101,7 +104,7 @@ public class CheckScheduler
             {
                 var result = await executor.ExecuteAsync(check, ct);
 
-                await resultSender.SendAsync(result, ct);
+                await resultSender.SendAsync(result, identity, ct);
             }
             catch (Exception ex)
             {
