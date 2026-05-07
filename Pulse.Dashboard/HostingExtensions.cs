@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Pulse.Dashboard.Components;
 using Pulse.Dashboard.Models;
 using Pulse.Dashboard.Services.Agents;
+using Pulse.Dashboard.Services.Checks;
 
 namespace Pulse.Dashboard;
 
@@ -22,13 +23,10 @@ public static class HostingExtensions
             .ValidateOnStart();
 
 
-        builder.Services.AddHttpClient<IAgentService, AgentService>((sp, http) =>
-        {
-            var settings = sp.GetRequiredService<IOptions<AppSetting>>().Value;
+        builder.Services.AddHttpClient<IAgentService, AgentService>(HttpClientConfiguration());
 
-            http.BaseAddress = new Uri(settings.PulseServer.BaseUrl, UriKind.Absolute);
-            http.Timeout = TimeSpan.FromSeconds(30);
-        });
+
+        builder.Services.AddHttpClient<ICheckService, CheckService>(HttpClientConfiguration());
 
 
         return builder.Build();
@@ -55,5 +53,17 @@ public static class HostingExtensions
 
 
         return app;
+    }
+
+
+    private static Action<IServiceProvider, HttpClient> HttpClientConfiguration()
+    {
+        return (sp, http) =>
+        {
+            var settings = sp.GetRequiredService<IOptions<AppSetting>>().Value;
+
+            http.BaseAddress = new Uri(settings.PulseServer.BaseUrl, UriKind.Absolute);
+            http.Timeout = TimeSpan.FromSeconds(30);
+        };
     }
 }
