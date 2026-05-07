@@ -6,12 +6,12 @@ using Pulse.Server.Common.Extensions;
 
 namespace Pulse.Server.Checks.GetChecks;
 
-public class GetCheckQueryHandler : IEndpointHandler
+public class GetAgentCheckQueryHandler : IEndpointHandler
 {
     private readonly ICheckRepository _checks;
     private readonly IAgentRepository _agents;
 
-    public GetCheckQueryHandler(ICheckRepository checks, IAgentRepository agents)
+    public GetAgentCheckQueryHandler(ICheckRepository checks, IAgentRepository agents)
     {
         _checks = checks;
         _agents = agents;

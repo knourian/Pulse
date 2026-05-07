@@ -3,13 +3,13 @@ using Pulse.Server.Common;
 
 namespace Pulse.Server.Checks.GetChecks;
 
-public class GetCheckQuery : IEndpoint
+public class GetAgentCheckQuery : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapGet(ApiRoutes.Checks.Get, async (
+        app.MapGet(ApiRoutes.Checks.GetAgentCheck, async (
            HttpContext context,
-           GetCheckQueryHandler handler,
+           GetAgentCheckQueryHandler handler,
            CancellationToken ct) =>
         {
             var result = await handler.HandleAsync(context, ct);

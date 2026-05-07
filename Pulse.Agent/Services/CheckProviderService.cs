@@ -18,7 +18,7 @@ public class CheckProviderService
 
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", identity.ApiKey);
 
-        var response = await _http.GetAsync(ApiRoutes.Checks.Get, ct);
+        var response = await _http.GetAsync(ApiRoutes.Checks.GetAgentCheck, ct);
 
         response.EnsureSuccessStatusCode();
 

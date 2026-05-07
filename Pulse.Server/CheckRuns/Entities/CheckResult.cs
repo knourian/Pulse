@@ -4,8 +4,8 @@ public class CheckResult
 {
     public long Id { get; set; }
 
-    public string CheckId { get; set; } = default!;
-    public string AgentId { get; set; } = default!;
+    public string CheckId { get; set; }
+    public string AgentId { get; set; }
 
     public DateTime TimestampUtc { get; set; }
 
