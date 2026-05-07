@@ -12,6 +12,7 @@ public static class ApiRoutes
     public static class Checks
     {
         public const string GetAgentCheck = "/api/agent-checks";
+        public const string GetCheck = "/api/checks";
     }
 
     public static class Results
