@@ -15,6 +15,12 @@ public class CheckRepository : ICheckRepository
         _db = db;
         _logger = logger;
     }
+
+    public async Task AddAsync(Check check, CancellationToken ct)
+    {
+        await _db.Checks.AddAsync(check, ct);
+    }
+
     public async Task<List<CheckDto>> GetAllChecks(CancellationToken ct)
     {
         return await _db.Checks.AsNoTracking().Select(x => new CheckDto
@@ -37,5 +43,21 @@ public class CheckRepository : ICheckRepository
             .Where(x => x.Enabled)
             .AsNoTracking()
             .ToListAsync(ct);
+    }
+    public async Task SaveChangesAsync(CancellationToken ct)
+    {
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            throw new InvalidOperationException("A check with the same type and target already exists.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while saving changes to the database.");
+            throw new InvalidOperationException("An error occurred while saving changes to the database.", ex);
+        }
     }
 }
