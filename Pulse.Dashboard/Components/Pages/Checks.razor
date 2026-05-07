@@ -1,0 +1,235 @@
+@page "/checks"
+@rendermode InteractiveServer
+
+@using Pulse.Contracts.Checks
+@using Pulse.Dashboard.Services.Checks
+
+@implements IDisposable
+
+@inject ICheckService CheckService
+
+<PageTitle>Checks</PageTitle>
+
+<h1>Checks</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+
+        <h5 class="card-title">Add Check</h5>
+
+        <div class="row g-3">
+
+            <div class="col-md-2">
+                <input class="form-control"
+                       placeholder="Name"
+                       @bind="_newCheck.Name" />
+            </div>
+
+            <div class="col-md-2">
+                <select class="form-select" @bind="_newCheck.Type">
+                    @foreach (var type in Enum.GetValues<CheckType>())
+                    {
+                        <option value="@type">@type</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <input class="form-control"
+                       placeholder="Target"
+                       @bind="_newCheck.Target" />
+            </div>
+
+            <div class="col-md-2">
+                <input class="form-control"
+                       type="number"
+                       placeholder="Interval"
+                       @bind="_newCheck.IntervalSeconds" />
+            </div>
+
+            <div class="col-md-2">
+                <input class="form-control"
+                       type="number"
+                       placeholder="Timeout"
+                       @bind="_newCheck.TimeoutMs" />
+            </div>
+
+            <div class="col-12">
+                <button class="btn btn-primary"
+                        @onclick="CreateAsync"
+                        disabled="@_isLoading">
+                    Add Check
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@if (_isLoading)
+{
+    <div class="d-flex align-items-center gap-2">
+        <div class="spinner-border spinner-border-sm"></div>
+        <span>Loading checks...</span>
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div class="alert alert-danger">@_error</div>
+}
+else if (_checks.Count == 0)
+{
+    <div class="alert alert-info">No checks found.</div>
+}
+else
+{
+    <div class="table-responsive">
+
+        <table class="table table-striped table-hover align-middle">
+
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Target</th>
+                    <th>Interval</th>
+                    <th>Timeout</th>
+                    <th>Enabled</th>
+                    <th>CreatedAt</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                @foreach (var check in _checks)
+                {
+                    <tr>
+
+                        <td>@check.Name</td>
+
+                        <td>@check.Type</td>
+
+                        <td>@check.Target</td>
+
+                        <td>@check.IntervalSeconds s</td>
+
+                        <td>@check.TimeoutMs ms</td>
+
+                        <td>
+                            <input type="checkbox"
+                                   checked="@check.Enabled"
+                                   @onchange="async e => await ToggleAsync(check, e)" />
+                        </td>
+
+                        <td>@check.CreatedUtc</td>
+
+                        <td>
+                            <button class="btn btn-sm btn-danger"@onclick="() => DeleteAsync(check.Id)" >
+                                Delete
+                            </button>
+                        </td>
+
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+
+    </div>
+}
+
+@code {
+
+    private IReadOnlyList<CheckDto> _checks = [];
+
+    private bool _isLoading;
+
+    private string _error;
+
+    private CancellationTokenSource _loadCts;
+
+    private CreateCheckRequest _newCheck = new()
+    {
+        IntervalSeconds = 10,
+        TimeoutMs = 3000,
+        Type = CheckType.Http
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+
+        _loadCts = new CancellationTokenSource();
+
+        _isLoading = true;
+        _error = null;
+
+        try
+        {
+            _checks = await CheckService.GetChecksAsync(_loadCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore cancellation
+        }
+        catch (Exception ex)
+        {
+            _error = $"Unable to load checks. {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        try
+        {
+            await CheckService.CreateAsync(_newCheck, CancellationToken.None);
+
+            _newCheck = new CreateCheckRequest
+            {
+                IntervalSeconds = 10,
+                TimeoutMs = 3000,
+                Type = CheckType.Http
+            };
+
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private async Task ToggleAsync(CheckDto check, ChangeEventArgs e)
+    {
+        var enabled = (bool)e.Value!;
+
+        await CheckService.SetEnabledAsync(check.Id,enabled,CancellationToken.None);
+
+        check.Enabled = enabled;
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        await CheckService.DeleteAsync(id, CancellationToken.None);
+
+        await ReloadAsync();
+    }
+
+    public void Dispose()
+    {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+    }
+}
