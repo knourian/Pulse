@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+using Pulse.Contracts.Checks;
 using Pulse.Server.Checks.Entities;
 using Pulse.Server.Data;
 
@@ -35,6 +36,10 @@ public class CheckRepository : ICheckRepository
             CreatedUtc = x.CreatedUtc
         }).ToListAsync(ct);
     }
+
+    public Task<Check> GetByIdAsync(string id, CancellationToken ct)
+    {
+        return _db.Checks.FirstOrDefaultAsync(x => x.Id == id, ct);
     }
 
     public async Task<List<Check>> GetEnabledAsync(CancellationToken ct)
