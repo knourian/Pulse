@@ -9,5 +9,6 @@ public interface ICheckRepository
     Task<List<CheckDto>> GetAllChecks(CancellationToken ct);
     Task<Check> GetByIdAsync(string id, CancellationToken ct);
     Task<List<Check>> GetEnabledAsync(CancellationToken ct);
+    Task Remove(Check check);
     Task SaveChangesAsync(CancellationToken ct);
 }

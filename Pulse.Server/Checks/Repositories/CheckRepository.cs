@@ -49,6 +49,13 @@ public class CheckRepository : ICheckRepository
             .AsNoTracking()
             .ToListAsync(ct);
     }
+
+    public Task Remove(Check check)
+    {
+        _db.Checks.Remove(check);
+        return Task.CompletedTask;
+    }
+
     public async Task SaveChangesAsync(CancellationToken ct)
     {
         try
