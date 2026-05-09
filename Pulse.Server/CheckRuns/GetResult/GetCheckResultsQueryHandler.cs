@@ -6,6 +6,7 @@ namespace Pulse.Server.CheckRuns.GetResult;
 
 public class GetCheckResultsQueryHandler : IEndpointHandler
 {
+    private const int Limit = 100;
     private readonly ICheckResultRepository _repository;
 
     public GetCheckResultsQueryHandler(ICheckResultRepository repository)
@@ -13,14 +14,9 @@ public class GetCheckResultsQueryHandler : IEndpointHandler
         _repository = repository;
     }
 
-    public async Task<IReadOnlyList<CheckResultDto>> HandleAsync(
-            string checkId,
-            CancellationToken ct)
+    public async Task<IReadOnlyList<CheckResultDto>> HandleAsync(string checkId, CancellationToken ct)
     {
-        var results = await _repository.GetRecentByCheckIdAsync(
-            checkId,
-            100,
-            ct);
+        var results = await _repository.GetRecentByCheckIdAsync(checkId, Limit, ct);
 
         return results;
     }
