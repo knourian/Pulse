@@ -1,0 +1,160 @@
+@page "/checks/{CheckId}/results"
+
+@using Pulse.Contracts.CheckRuns
+@using Pulse.Contracts.Checks
+@using Pulse.Dashboard.Services.CheckResults
+
+@implements IDisposable
+
+@inject ICheckResultService CheckResultService
+
+<PageTitle>Check Results</PageTitle>
+
+<h1>Check Results</h1>
+
+<p>
+    Check Id:
+    <code>@CheckId</code>
+</p>
+
+<div class="mb-3">
+    <button class="btn btn-primary"
+            @onclick="ReloadAsync"
+            disabled="@_isLoading">
+        @(_isLoading ? "Loading..." : "Refresh")
+    </button>
+</div>
+
+@if (_isLoading)
+{
+    <div class="d-flex align-items-center gap-2">
+        <div class="spinner-border spinner-border-sm"></div>
+        <span>Loading results...</span>
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div class="alert alert-danger">
+        @_error
+    </div>
+}
+else if (_results.Count == 0)
+{
+    <div class="alert alert-info">
+        No results found.
+    </div>
+}
+
+else
+{
+    <div class="table-responsive">
+
+        <table class="table table-striped table-hover align-middle">
+
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Response Time</th>
+                    <th>Timestamp (UTC)</th>
+                    <th>Error</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                @foreach (var result in _results)
+                {
+                    <tr>
+
+                        <td>
+                            @if (result.IsSuccess)
+                            {
+                                <span class="badge text-bg-success">
+                                    Success
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-danger">
+                                    Failed
+                                </span>
+                            }
+                        </td>
+
+                        <td>
+                            @result.ResponseTimeMs ms
+                        </td>
+
+                        <td>
+                            @result.TimestampUtc.ToString("yyyy-MM-dd HH:mm:ss")
+                        </td>
+
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(result.Error))
+                            {
+                                <code>@result.Error</code>
+                            }
+                        </td>
+
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public string CheckId { get; set; } = default!;
+
+    private IReadOnlyList<CheckResultDto> _results = [];
+
+    private bool _isLoading;
+
+    private string _error;
+
+    private CancellationTokenSource _loadCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+
+        _loadCts = new CancellationTokenSource();
+
+        _isLoading = true;
+        _error = null;
+
+        try
+        {
+            _results = await CheckResultService.GetResultsAsync(CheckId,_loadCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Loading was canceled, no need to show an error
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+    }
+}

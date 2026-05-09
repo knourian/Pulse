@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Pulse.Dashboard.Components;
 using Pulse.Dashboard.Models;
 using Pulse.Dashboard.Services.Agents;
+using Pulse.Dashboard.Services.CheckResults;
 using Pulse.Dashboard.Services.Checks;
 
 namespace Pulse.Dashboard;
@@ -25,8 +26,10 @@ public static class HostingExtensions
 
         builder.Services.AddHttpClient<IAgentService, AgentService>(HttpClientConfiguration());
 
-
         builder.Services.AddHttpClient<ICheckService, CheckService>(HttpClientConfiguration());
+
+        builder.Services.AddHttpClient<ICheckResultService, CheckResultService>(HttpClientConfiguration());
+
 
 
         return builder.Build();

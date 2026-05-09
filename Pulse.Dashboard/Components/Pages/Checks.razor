@@ -125,6 +125,10 @@ else
                         <td>@check.CreatedUtc</td>
 
                         <td>
+                            <a class="btn btn-sm btn-outline-primary"
+                                   href="/checks/@check.Id/results">
+                                Results
+                            </a>
                             <button class="btn btn-sm btn-danger"@onclick="() => DeleteAsync(check.Id)" >
                                 Delete
                             </button>
