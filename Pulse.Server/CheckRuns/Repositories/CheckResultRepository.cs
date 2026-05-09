@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+
+using Pulse.Contracts.CheckRuns;
 using Pulse.Server.CheckRuns.Entities;
 using Pulse.Server.Data;
 
@@ -10,6 +13,24 @@ public class CheckResultRepository : ICheckResultRepository
     public CheckResultRepository(ApplicationDbContext db)
     {
         _db = db;
+    }
+
+    public async Task<List<CheckResultDto>> GetRecentByCheckIdAsync(string checkId, int limit, CancellationToken ct)
+    {
+        return await _db.Results.AsNoTracking()
+        .Where(x => x.CheckId == checkId)
+        .OrderByDescending(x => x.TimestampUtc)
+        .Take(limit)
+        .Select(x => new CheckResultDto
+        {
+            CheckId = x.CheckId,
+            AgentId = x.AgentId,
+            TimestampUtc = x.TimestampUtc,
+            IsSuccess = x.IsSuccess,
+            ResponseTimeMs = x.ResponseTimeMs,
+            Error = x.Error
+        })
+        .ToListAsync(ct);
     }
 
     public async Task AddRangeAsync(List<CheckResult> results, CancellationToken ct)
