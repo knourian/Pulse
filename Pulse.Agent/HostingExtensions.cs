@@ -20,6 +20,14 @@ public static class HostingExtensions
             "Missing 'Agent:IdentityEncryptionKey'.")
         .ValidateOnStart();
 
+        builder.Services.AddWindowsService(options =>
+        {
+            options.ServiceName = "Pulse Agent";
+        });
+
+
+        builder.Services.AddSystemd();
+
         builder.Services.AddSingleton<AgentIdentityStore>();
         builder.Services.AddSingleton<CheckScheduler>();
 

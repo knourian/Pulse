@@ -1,0 +1,17 @@
+[Unit]
+Description=Pulse Agent
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/pulse-agent
+ExecStart=/usr/bin/dotnet /opt/pulse-agent/Pulse.Agent.dll
+
+Restart=always
+RestartSec=5
+
+User=root
+
+Environment=DOTNET_ENVIRONMENT=Production
+
+[Install]
+WantedBy=multi-user.target
