@@ -2,8 +2,8 @@ using System.Threading.Channels;
 
 using Pulse.Agent.Contracts;
 using Pulse.Agent.Models;
+using Pulse.Contracts.CheckRuns;
 using Pulse.Contracts.Common;
-using Pulse.Contracts.Results;
 
 namespace Pulse.Agent.Services;
 

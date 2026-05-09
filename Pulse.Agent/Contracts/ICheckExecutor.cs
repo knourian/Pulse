@@ -1,5 +1,5 @@
+using Pulse.Contracts.CheckRuns;
 using Pulse.Contracts.Checks;
-using Pulse.Contracts.Results;
 
 namespace Pulse.Agent.Contracts;
 

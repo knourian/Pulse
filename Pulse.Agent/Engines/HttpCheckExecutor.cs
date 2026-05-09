@@ -1,7 +1,7 @@
 using Pulse.Agent.Contracts;
 using Pulse.Agent.Helpers;
+using Pulse.Contracts.CheckRuns;
 using Pulse.Contracts.Checks;
-using Pulse.Contracts.Results;
 
 namespace Pulse.Agent.Engines;
 

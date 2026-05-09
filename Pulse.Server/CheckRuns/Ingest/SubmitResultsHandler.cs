@@ -1,4 +1,4 @@
-using Pulse.Contracts.Results;
+using Pulse.Contracts.CheckRuns;
 using Pulse.Server.Agents.Repositories;
 using Pulse.Server.CheckRuns.Entities;
 using Pulse.Server.CheckRuns.Repositories;

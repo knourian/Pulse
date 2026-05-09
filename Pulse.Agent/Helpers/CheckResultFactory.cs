@@ -1,4 +1,4 @@
-using Pulse.Contracts.Results;
+using Pulse.Contracts.CheckRuns;
 
 namespace Pulse.Agent.Helpers;
 

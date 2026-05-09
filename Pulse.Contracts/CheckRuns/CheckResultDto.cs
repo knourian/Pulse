@@ -1,4 +1,4 @@
-﻿namespace Pulse.Contracts.Results;
+namespace Pulse.Contracts.CheckRuns;
 
 public class CheckResultDto
 {

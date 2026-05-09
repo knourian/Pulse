@@ -1,5 +1,5 @@
+using Pulse.Contracts.CheckRuns;
 using Pulse.Contracts.Common;
-using Pulse.Contracts.Results;
 using Pulse.Server.Common;
 
 namespace Pulse.Server.CheckRuns.Ingest;

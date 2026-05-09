@@ -2,7 +2,7 @@ using Pulse.Contracts.Checks;
 using Pulse.Contracts.Common;
 using Pulse.Server.Common;
 
-namespace Pulse.Server.Checks.CreateCheck;
+namespace Pulse.Server.Checks.Create;
 
 public class CreateCheckCommand : IEndpoint
 {

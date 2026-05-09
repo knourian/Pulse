@@ -3,7 +3,7 @@ using Pulse.Server.Checks.Entities;
 using Pulse.Server.Checks.Repositories;
 using Pulse.Server.Common;
 
-namespace Pulse.Server.Checks.CreateCheck;
+namespace Pulse.Server.Checks.Create;
 
 public class CreateCheckCommandHandler : IEndpointHandler
 {
