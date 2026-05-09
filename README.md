@@ -31,3 +31,14 @@ A distributed synthetic monitoring system that checks reachability and correctne
 *   **Pulse.Server:** The backend API built with ASP.NET.  Responsible for control and data storage.
 *   **Pulse.Agent:**  A worker service that performs the actual checks.
 *   **Communication:**  The components communicate primarily via HTTP requests (pulling configuration from the server and pushing results).
+
+
+
+
+
+
+## Install Agent
+
+Please Refer to [Agent Installation Guide](./Pulse.Agent/install.md) for detailed instructions on installing the Pulse.Agent on Windows and Linux systems.
+
+
