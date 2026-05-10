@@ -32,19 +32,7 @@ public class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var identity = await _identityStore.LoadAsync(stoppingToken);
-
-        if (identity == null)
-        {
-            identity = await RegisterWithRetryAsync(stoppingToken);
-
-            await _identityStore.SaveAsync(identity, stoppingToken);
-            _logger.LogInformation("Agent registered with id: {AgentId}", identity.AgentId);
-        }
-        else
-        {
-            _logger.LogInformation("Loaded existing agent identity: {AgentId}", identity.AgentId);
-        }
+        var identity = await EnsureIdentityAsync(stoppingToken);
 
 
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(_settings.Agent.HeartbeatSeconds));
@@ -53,11 +41,22 @@ public class Worker : BackgroundService
         {
             while (await timer.WaitForNextTickAsync(stoppingToken))
             {
-                var checks = await _checkProvider.GetChecksAsync(identity, stoppingToken);
+                try
+                {
+                    var checks = await _checkProvider.GetChecksAsync(identity, stoppingToken);
 
-                _scheduler.Sync(checks);
+                    _scheduler.Sync(checks);
 
-                _logger.LogInformation("Worker heartbeat at: {Time}", DateTimeOffset.UtcNow);
+                    _logger.LogInformation("Worker heartbeat at: {Time}", DateTimeOffset.UtcNow);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unhandled error during heartbeat. Continuing worker loop.");
+                }
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -65,7 +64,41 @@ public class Worker : BackgroundService
             // Graceful shutdown.
         }
     }
+    private async Task<AgentIdentity> EnsureIdentityAsync(CancellationToken ct)
+    {
+        var identity = await _identityStore.LoadAsync(ct);
 
+        if (identity != null)
+        {
+            _logger.LogInformation("Loaded existing agent identity: {AgentId}", identity.AgentId);
+            return identity;
+        }
+
+        while (!ct.IsCancellationRequested)
+        {
+            try
+            {
+                identity = await RegisterWithRetryAsync(ct);
+
+                await _identityStore.SaveAsync(identity, ct);
+                _logger.LogInformation("Agent registered with id: {AgentId}", identity.AgentId);
+
+                return identity;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                var retryDelay = TimeSpan.FromSeconds(_settings.Agent.RegistrationRetrySeconds);
+                _logger.LogError(ex, "Registration cycle failed. Retrying in {DelaySeconds}s.", retryDelay.TotalSeconds);
+                await Task.Delay(retryDelay, ct);
+            }
+        }
+
+        throw new OperationCanceledException(ct);
+    }
 
     private async Task<AgentIdentity> RegisterWithRetryAsync(CancellationToken ct)
     {
