@@ -42,6 +42,13 @@ public class CheckResultConfiguration : IEntityTypeConfiguration<CheckResult>
 
         builder.HasIndex(x => new { x.AgentId, x.TimestampUtc });
 
+        builder.HasIndex(x => new
+        {
+            x.CheckId,
+            x.AgentId,
+            x.TimestampUtc
+        });
+
         builder.HasIndex(x => x.IsSuccess);
     }
 }
