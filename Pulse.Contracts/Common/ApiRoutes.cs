@@ -22,6 +22,8 @@ public static class ApiRoutes
     {
         public const string Submit = "/api/results";
         public static string Get(string checkId) => $"/api/checks/{checkId}/results";
+
+        public const string Radar = "/api/radar";
     }
 }
 #pragma warning restore CA1034 // Nested types should not be visible

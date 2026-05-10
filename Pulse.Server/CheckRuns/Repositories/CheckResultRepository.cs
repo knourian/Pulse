@@ -42,4 +42,99 @@ public class CheckResultRepository : ICheckResultRepository
     {
         return _db.SaveChangesAsync(ct);
     }
+
+    public async Task<List<RadarCheckDto>> GetRadarAsync(
+        CancellationToken ct)
+    {
+        var latestPerCheckAndAgent = _db.Results
+            .AsNoTracking()
+            .GroupBy(x => new
+            {
+                x.CheckId,
+                x.AgentId
+            })
+            .Select(g => new
+            {
+                g.Key.CheckId,
+                g.Key.AgentId,
+                TimestampUtc = g.Max(x => x.TimestampUtc)
+            });
+
+        var latestResults = await _db.Results
+            .AsNoTracking()
+            .Join(
+                latestPerCheckAndAgent,
+                result => new
+                {
+                    result.CheckId,
+                    result.AgentId,
+                    result.TimestampUtc
+                },
+                latest => new
+                {
+                    latest.CheckId,
+                    latest.AgentId,
+                    latest.TimestampUtc
+                },
+                (result, _) => result)
+            .Join(_db.Checks,
+                result => result.CheckId,
+                check => check.Id,
+                (result, check) => new
+                {
+                    CheckId = check.Id,
+                    CheckName = check.Name,
+
+                    result.AgentId,
+                    result.IsSuccess,
+                    result.ResponseTimeMs,
+                    result.Error,
+                    result.TimestampUtc
+                })
+            .Join(
+                _db.Agents,
+                result => result.AgentId,
+                agent => agent.Id,
+                (result, agent) => new
+                {
+                    result.CheckId,
+                    result.CheckName,
+
+                    AgentId = agent.Id,
+                    AgentName = agent.Hostname,
+
+                    result.IsSuccess,
+                    result.ResponseTimeMs,
+                    result.Error,
+                    result.TimestampUtc
+                })
+            .ToListAsync(ct);
+
+        return latestResults
+            .GroupBy(x => new
+            {
+                x.CheckId,
+                x.CheckName
+            })
+            .Select(group => new RadarCheckDto
+            {
+                CheckId = group.Key.CheckId,
+                CheckName = group.Key.CheckName,
+
+                Agents = group
+                    .Select(x => new RadarAgentResultDto
+                    {
+                        AgentId = x.AgentId,
+                        AgentName = x.AgentName,
+                        IsSuccess = x.IsSuccess,
+                        ResponseTimeMs = x.ResponseTimeMs,
+                        Error = x.Error,
+                        TimestampUtc = x.TimestampUtc
+                    })
+                    .OrderBy(x => x.AgentName)
+                    .ToList()
+            })
+            .OrderBy(x => x.CheckName)
+            .ToList();
+    }
 }
