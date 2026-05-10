@@ -33,4 +33,24 @@ public class CheckResultService : ICheckResultService
             throw new InvalidOperationException("Failed to load results for check.", ex);
         }
     }
+
+    public async Task<IReadOnlyList<RadarCheckDto>> GetRadarAsync(CancellationToken ct)
+    {
+        try
+        {
+            var response = await _http.GetAsync(ApiRoutes.Results.Radar, ct);
+
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<List<RadarCheckDto>>(cancellationToken: ct);
+
+            return result ?? [];
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load radar data.");
+            throw new InvalidOperationException("Failed to load radar data.", ex);
+        }
+    }
 }

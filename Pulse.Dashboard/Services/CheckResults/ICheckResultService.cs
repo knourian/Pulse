@@ -5,4 +5,5 @@ namespace Pulse.Dashboard.Services.CheckResults;
 public interface ICheckResultService
 {
     Task<IReadOnlyList<CheckResultDto>> GetResultsAsync(string checkId, CancellationToken ct);
+    Task<IReadOnlyList<RadarCheckDto>> GetRadarAsync(CancellationToken ct);
 }
