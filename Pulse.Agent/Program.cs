@@ -4,8 +4,12 @@ using Serilog;
 
 LoadDotEnv();
 
-var builder = Host.CreateApplicationBuilder(args);
-
+var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
+{
+    Args = args,
+    ContentRootPath = AppContext.BaseDirectory
+});
+Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "production";
 var appName = Assembly.GetExecutingAssembly().GetName().Name;
