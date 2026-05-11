@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 
+using Pulse.Dashboard.Api;
 using Pulse.Dashboard.Components;
 using Pulse.Dashboard.Models;
 using Pulse.Dashboard.Services.Agents;
@@ -23,10 +26,43 @@ public static class HostingExtensions
                             "Invalid 'PulseServer:BaseUrl'.")
             .ValidateOnStart();
 
+        builder.Services.Configure<DashboardOptions>(builder.Configuration.GetSection("Dashboard"));
+
+        builder.Services
+            .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options =>
+            {
+                options.LoginPath = "/login";
+
+                options.AccessDeniedPath = "/login";
+
+                options.Cookie.Name = "pulse-dashboard-auth";
+
+                options.ExpireTimeSpan = TimeSpan.FromHours(12);
+
+                options.SlidingExpiration = true;
+
+                options.Cookie.SameSite = SameSiteMode.Strict;
+
+                options.Cookie.HttpOnly = true;
+            });
+
+        builder.Services.AddAuthorization();
+
+        builder.Services.AddHttpContextAccessor();
+
+        builder.Services.AddCascadingAuthenticationState();
+
 
         builder.Services.AddHttpClient<IAgentService, AgentService>(HttpClientConfiguration());
 
         builder.Services.AddHttpClient<ICheckService, CheckService>(HttpClientConfiguration());
+
+        builder.Services.AddScoped(sp =>
+        {
+            var nav = sp.GetRequiredService<NavigationManager>();
+            return new HttpClient { BaseAddress = new Uri(nav.BaseUri) };
+        });
 
         builder.Services.AddHttpClient<ICheckResultService, CheckResultService>(HttpClientConfiguration());
 
@@ -48,9 +84,14 @@ public static class HostingExtensions
         app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
         app.UseHttpsRedirection();
 
+        app.UseAuthentication();
+
+        app.UseAuthorization();
+
         app.UseAntiforgery();
 
         app.MapStaticAssets();
+        app.MapAuthEndpoints();
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
 

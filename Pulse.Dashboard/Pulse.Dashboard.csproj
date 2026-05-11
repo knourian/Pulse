@@ -15,4 +15,10 @@
 		<ProjectReference Include="..\Pulse.Contracts\Pulse.Contracts.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update=".env.example">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
 </Project>

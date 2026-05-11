@@ -1,0 +1,84 @@
+@page "/login"
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+
+
+
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<PageTitle>Login</PageTitle>
+
+<h1>Login</h1>
+
+<EditForm Model="_model" OnValidSubmit="LoginAsync" FormName="Login">
+
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Username</label>
+        <InputText class="form-control" @bind-Value="_model.Username" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <InputText type="password" class="form-control" @bind-Value="_model.Password" />
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="alert alert-danger">@_error</div>
+    }
+
+    <button class="btn btn-primary" type="submit">Login</button>
+
+</EditForm>
+
+@code {
+
+    private readonly LoginModel _model = new();
+
+    private string _error;
+    private string _returnUrl = "/";
+
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("ReturnUrl", out var returnUrl) &&
+            !string.IsNullOrWhiteSpace(returnUrl))
+        {
+            _returnUrl = returnUrl!;
+        }
+    }
+
+    private async Task LoginAsync()
+    {
+        var success = await JS.InvokeAsync<bool>("loginFetch", _model.Username, _model.Password);
+
+        if (success)
+        {
+            Navigation.NavigateTo(_returnUrl, forceLoad: true);
+        }
+        else
+        {
+            _error = "Invalid username or password.";
+        }
+    }
+
+    private sealed class LoginModel
+    {
+        [Required]
+        public string Username { get; set; }
+
+        [Required]
+        public string Password { get; set; }
+    }
+}

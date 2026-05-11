@@ -1,4 +1,7 @@
 @page "/agents"
+@rendermode InteractiveServer
+@attribute [Authorize]
+
 @using Pulse.Dashboard.Services.Agents
 @implements IDisposable
 @inject IAgentService AgentService
