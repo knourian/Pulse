@@ -57,14 +57,38 @@ else
 
                 <tr>
 
-                    <th style="min-width: 240px;">
+                    <th class="sticky-check-column bg-light" style="min-width:150px;">
                         Check
                     </th>
 
                     @foreach (var agent in _agents)
                     {
-                        <th class="text-center">
-                            @agent
+                        <th style="min-width: 200px;">
+
+                            <div class="fw-semibold">
+                                <span style="padding:0 3px">@agent.AgentName</span>
+                                @if (agent.IsOnline)
+                                {
+                                    <span class="d-inline-block rounded-circle bg-success"
+                                          style="width:12px; height:12px;"
+                                          title="Online">
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="d-inline-block rounded-circle bg-danger"
+                                          style="width:12px; height:12px;"
+                                          title="Offline">
+                                    </span>
+                                }
+                            </div>
+
+                            <small class="text-muted">
+
+                                Last Seen: @agent.LastHeartbeatUtc.ToString("HH:mm:ss")
+
+                            </small>
+
                         </th>
                     }
 
@@ -78,13 +102,13 @@ else
                 {
                     <tr>
 
-                        <td>
+                        <td class="sticky-check-column bg-white">
 
                             <div class="fw-semibold">
                                 @check.CheckName
                             </div>
 
-                            <small class="text-muted">
+                            <small class="text-muted" style="font-size: xx-small;">
                                 @check.CheckId
                             </small>
 
@@ -92,44 +116,59 @@ else
 
                         @foreach (var agent in _agents)
                         {
-                            var result = check.Agents
-                                .FirstOrDefault(x => x.AgentName == agent);
+                            var agentResult = check.Agents
+                                .FirstOrDefault(x => x.AgentId == agent.AgentId);
 
-                            <td class="text-center">
+                            <td>
 
-                                @if (result == null)
+                                @if (agentResult == null)
                                 {
                                     <span class="badge text-bg-secondary">
                                         No Data
                                     </span>
                                 }
-                                else if (result.IsSuccess)
-                                {
-                                    <div>
-
-                                        <span class="badge text-bg-success">
-                                            Up
-                                        </span>
-
-                                    </div>
-
-                                    <small class="text-muted">
-                                        @result.ResponseTimeMs ms
-                                    </small>
-                                }
                                 else
                                 {
-                                    <div>
+                                    <div class="d-flex flex-column gap-2">
 
-                                        <span class="badge text-bg-danger">
-                                            Down
-                                        </span>
+                                        <div class="d-flex gap-1 flex-wrap">
+
+                                            @foreach (var result in agentResult.Results
+                                                .OrderByDescending(x => x.TimestampUtc))
+                                            {
+                                                <div class="border rounded p-2 text-center d-flex flex-column justify-content-between align-items-center"
+                                                     style="width:90px; height:72px;">
+
+                                                    @if (result.IsSuccess)
+                                                    {
+                                                        <span class="badge text-bg-success">
+                                                            Up
+                                                        </span>
+
+                                                        <small class="text-muted text-nowrap">
+                                                            @result.ResponseTimeMs ms
+                                                        </small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge text-bg-danger">
+                                                            Down
+                                                        </span>
+
+                                                        <small class="text-muted text-truncate w-100"
+                                                               title="@result.Error">
+
+                                                            @result.Error
+
+                                                        </small>
+                                                    }
+
+                                                </div>
+                                            }
+
+                                        </div>
 
                                     </div>
-
-                                    <small class="text-muted">
-                                        @result.Error
-                                    </small>
                                 }
 
                             </td>
@@ -149,7 +188,7 @@ else
 
     private IReadOnlyList<RadarCheckDto> _checks = [];
 
-    private IReadOnlyList<string> _agents = [];
+    private IReadOnlyList<RadarAgentDto> _agents = [];
 
     private bool _isLoading;
 
@@ -175,15 +214,12 @@ else
 
         try
         {
-            _checks = await CheckResultService.GetRadarAsync(
-                _loadCts.Token);
+            _checks = await CheckResultService.GetRadarAsync(_loadCts.Token);
 
-            _agents = _checks
-                .SelectMany(x => x.Agents)
-                .Select(x => x.AgentName)
-                .Distinct()
-                .OrderBy(x => x)
-                .ToList();
+            _agents = _checks.SelectMany(x => x.Agents)
+                             .DistinctBy(x=> x.AgentId)
+                             .OrderBy(x => x.LastHeartbeatUtc)
+                             .ToList();
         }
         catch (OperationCanceledException)
         {
