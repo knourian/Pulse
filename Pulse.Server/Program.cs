@@ -1,7 +1,7 @@
 using Pulse.Server;
 
 using Serilog;
-
+using Serilog.Settings.Configuration;
 
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "production";
 var appName = Assembly.GetExecutingAssembly().GetName().Name;
@@ -25,7 +25,10 @@ try
 
     builder.Host.UseSerilog((context, lc) =>
     {
-        lc.ReadFrom.Configuration(context.Configuration);
+        lc.ReadFrom.Configuration(context.Configuration,
+            new ConfigurationReaderOptions(
+                typeof(ConsoleLoggerConfigurationExtensions).Assembly,
+                typeof(FileLoggerConfigurationExtensions).Assembly));
     });
 
     builder.Host.UseDefaultServiceProvider((context, options) =>
