@@ -23,11 +23,11 @@ public class HttpCheckExecutor : ICheckExecutor
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             cts.CancelAfter(check.TimeoutMs);
 
-            var response = await _http.GetAsync(check.Target, cts.Token);
+            var statusCode = await GetStatusCodeAsync(check.Target, cts.Token);
 
             sw.Stop();
 
-            if ((int)response.StatusCode >= 200 && (int)response.StatusCode < 300)
+            if ((int)statusCode >= 200 && (int)statusCode < 300)
             {
                 return CheckResultFactory.Success(check.Id, sw.ElapsedMilliseconds);
             }
@@ -35,18 +35,27 @@ public class HttpCheckExecutor : ICheckExecutor
             return CheckResultFactory.Failure(
                 check.Id,
                 sw.ElapsedMilliseconds,
-                $"HTTP {(int)response.StatusCode}"
+                $"HTTP {(int)statusCode}"
             );
         }
         catch (Exception ex)
         {
             sw.Stop();
-
-            return CheckResultFactory.Failure(
-                check.Id,
-                sw.ElapsedMilliseconds,
-                ex.Message
-            );
+            return CheckResultFactory.Failure(check.Id, sw.ElapsedMilliseconds, ex.Message);
         }
+    }
+
+    private async Task<System.Net.HttpStatusCode> GetStatusCodeAsync(string target, CancellationToken ct)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Head, target);
+        var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed)
+        {
+            var getRequest = new HttpRequestMessage(HttpMethod.Get, target);
+            response = await _http.SendAsync(getRequest, HttpCompletionOption.ResponseHeadersRead, ct);
+        }
+
+        return response.StatusCode;
     }
 }
