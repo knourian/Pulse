@@ -55,6 +55,7 @@ else
 
             <thead>
                 <tr>
+                    <th>Agent Name</th>
                     <th>Status</th>
                     <th>Response Time</th>
                     <th>Timestamp (UTC)</th>
@@ -67,7 +68,9 @@ else
                 @foreach (var result in _results)
                 {
                     <tr>
-
+                        <td>
+                            @result.AgentName
+                        </td>
                         <td>
                             @if (result.IsSuccess)
                             {

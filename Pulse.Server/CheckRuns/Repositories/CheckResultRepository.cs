@@ -17,7 +17,7 @@ public class CheckResultRepository : ICheckResultRepository
 
     public async Task<List<CheckResultDto>> GetRecentByCheckIdAsync(string checkId, int limit, CancellationToken ct)
     {
-        return await _db.Results.AsNoTracking()
+        var result = await _db.Results.AsNoTracking()
         .Where(x => x.CheckId == checkId)
         .OrderByDescending(x => x.TimestampUtc)
         .Take(limit)
@@ -31,6 +31,20 @@ public class CheckResultRepository : ICheckResultRepository
             Error = x.Error
         })
         .ToListAsync(ct);
+
+        var agents = await _db.Agents
+            .AsNoTracking()
+            .ToDictionaryAsync(x => x.Id, ct);
+
+        result.ForEach(x =>
+        {
+            if (agents.TryGetValue(x.AgentId, out var agent))
+            {
+                x.AgentName = agent.Hostname;
+            }
+        });
+
+        return result;
     }
 
     public async Task AddRangeAsync(List<CheckResult> results, CancellationToken ct)

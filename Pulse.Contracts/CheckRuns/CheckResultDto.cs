@@ -4,6 +4,7 @@ public class CheckResultDto
 {
     public string CheckId { get; set; }
     public string AgentId { get; set; }
+    public string AgentName { get; set; }
 
     public DateTime TimestampUtc { get; set; }
 
