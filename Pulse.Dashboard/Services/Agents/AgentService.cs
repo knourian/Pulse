@@ -7,7 +7,6 @@ public sealed class AgentService(HttpClient httpClient, ILogger<AgentService> lo
 {
     public async Task<IReadOnlyList<AgentDto>> GetAgentsAsync(CancellationToken cancellationToken = default)
     {
-#pragma warning disable S2139 // Exceptions should be either logged or rethrown but not both
         try
         {
             var agents = await httpClient.GetFromJsonAsync<List<AgentDto>>(ApiRoutes.Agents.GetList, cancellationToken);
@@ -19,8 +18,28 @@ public sealed class AgentService(HttpClient httpClient, ILogger<AgentService> lo
         {
             logger.LogError(ex, "Failed to fetch agents from {Endpoint}", ApiRoutes.Agents.GetList);
 
-            throw;
+            throw new InvalidOperationException("Failed to fetch agents", ex);
         }
-#pragma warning restore S2139 // Exceptions should be either logged or rethrown but not both
+    }
+
+    public async Task SetAgentHostname(string id, string hostName, CancellationToken ct)
+    {
+        try
+        {
+            var request = new EditAgentRequest
+            {
+                Hostname = hostName
+            };
+
+            var response = await httpClient.PutAsJsonAsync(ApiRoutes.Agents.EditHostname(id), request, ct);
+
+            response.EnsureSuccessStatusCode();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to update agent hostname agent: {AgentId}", id);
+
+            throw new InvalidOperationException("Failed to update agent hostname agent", ex);
+        }
     }
 }

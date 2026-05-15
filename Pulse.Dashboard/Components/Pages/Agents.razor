@@ -40,6 +40,7 @@ else
                     <th scope="col">Id</th>
                     <th scope="col">Hostname</th>
                     <th scope="col">Last Seen (UTC)</th>
+                    <th scope="col" class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -49,6 +50,12 @@ else
                         <td><code>@agent.Id</code></td>
                         <td>@agent.Hostname</td>
                         <td>@agent.LastSeenUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    @onclick="() => OpenEditHostnameModal(agent)">
+                                Edit hostname
+                            </button>
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -56,11 +63,60 @@ else
     </div>
 }
 
+@if (_isEditModalOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="editHostnameTitle">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editHostnameTitle">Edit Agent Hostname</h5>
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="CloseEditHostnameModal" disabled="@_isSaving"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <div class="small text-muted">Agent Id</div>
+                        <code>@_editAgentId</code>
+                    </div>
+
+                    <label for="hostname-input" class="form-label">Hostname</label>
+                    <input id="hostname-input"
+                           class="form-control"
+                           @bind="_editHostName"
+                           @bind:event="oninput"
+                           disabled="@_isSaving" />
+
+                    @if (!string.IsNullOrWhiteSpace(_editError))
+                    {
+                        <div class="alert alert-danger mt-3 mb-0" role="alert">@_editError</div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseEditHostnameModal" disabled="@_isSaving">Cancel</button>
+                    <button type="button"
+                            class="btn btn-primary"
+                            @onclick="SaveHostnameAsync"
+                            disabled="@(_isSaving || string.IsNullOrWhiteSpace(_editHostName))">
+                        @(_isSaving ? "Saving..." : "Save")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
 @code {
     private IReadOnlyList<AgentDto> _agents = [];
     private bool _isLoading;
     private string _error;
     private CancellationTokenSource _loadCts;
+
+    private bool _isEditModalOpen;
+    private string _editAgentId;
+    private string _editHostName;
+    private string _editError;
+    private bool _isSaving;
+    private CancellationTokenSource _editCts;
 
     protected override async Task OnInitializedAsync()
     {
@@ -94,9 +150,65 @@ else
         }
     }
 
+    private void OpenEditHostnameModal(AgentDto agent)
+    {
+        _editAgentId = agent.Id;
+        _editHostName = agent.Hostname;
+        _editError = null;
+        _isEditModalOpen = true;
+    }
+
+    private void CloseEditHostnameModal()
+    {
+        if (_isSaving)
+        {
+            return;
+        }
+
+        _isEditModalOpen = false;
+        _editError = null;
+    }
+
+    private async Task SaveHostnameAsync()
+    {
+        if (_isSaving || string.IsNullOrWhiteSpace(_editAgentId) || string.IsNullOrWhiteSpace(_editHostName))
+        {
+            return;
+        }
+
+        _editCts?.Cancel();
+        _editCts?.Dispose();
+        _editCts = new CancellationTokenSource();
+
+        _isSaving = true;
+        _editError = null;
+
+        try
+        {
+            await AgentService.SetAgentHostname(_editAgentId, _editHostName.Trim(), _editCts.Token);
+            _isEditModalOpen = false;
+            await ReloadAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // Operation Canceled, do nothing
+        }
+        catch (Exception ex)
+        {
+            _editError = $"Unable to update hostname. {ex.Message}";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
     public void Dispose()
     {
         _loadCts?.Cancel();
         _loadCts?.Dispose();
+
+        _editCts?.Cancel();
+        _editCts?.Dispose();
     }
 }
