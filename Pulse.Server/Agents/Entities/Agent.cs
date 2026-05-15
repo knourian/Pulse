@@ -8,4 +8,9 @@ public class Agent
     public string ApiKey { get; set; }
 
     public DateTime LastSeenUtc { get; set; }
+
+    internal void UpdateHostName(string hostName)
+    {
+        Hostname = hostName;
+    }
 }

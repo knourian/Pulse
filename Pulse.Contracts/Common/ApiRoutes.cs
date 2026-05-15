@@ -7,6 +7,7 @@ public static class ApiRoutes
     {
         public const string Register = "/api/agents/register";
         public const string GetList = "/api/agents";
+        public static string EditHostname(string id) => $"/api/agents/{id}";
     }
 
     public static class Checks
