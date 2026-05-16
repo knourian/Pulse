@@ -14,3 +14,5 @@ window.logoutFetch = async () => {
     });
     return response.ok;
 };
+
+window.getBrowserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;

@@ -4,9 +4,11 @@
 
 @using Pulse.Contracts.CheckRuns
 @using Pulse.Dashboard.Services.CheckResults
+@using Microsoft.JSInterop
 
 @implements IDisposable
 
+@inject IJSRuntime JS
 @inject ICheckResultService CheckResultService
 
 <PageTitle>Radar</PageTitle>
@@ -194,9 +196,33 @@ else
 
     private CancellationTokenSource _loadCts;
 
+    private TimeZoneInfo _browserTimeZone;
+
+    private string _browserTimeZoneId;
+
     protected override async Task OnInitializedAsync()
     {
         await ReloadAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        try
+        {
+            _browserTimeZoneId = await JS.InvokeAsync<string>("getBrowserTimeZone");
+            _browserTimeZone = TryResolveTimeZone(_browserTimeZoneId);
+
+            StateHasChanged();
+        }
+        catch (JSDisconnectedException)
+        {
+            // Ignore disconnect during prerender/dispose
+        }
     }
 
     private async Task ReloadAsync()
@@ -234,24 +260,72 @@ else
         }
     }
 
-    private static string GetLastSeenDisplay(DateTime dateTime)
+    private string GetLastSeenDisplay(DateTime dateTime)
     {
-        var today = DateTime.UtcNow.Date;
-        var heartbeatDate = dateTime.Date;
+        var localDateTime = GetUserDateTime(dateTime);
+        var today = GetUserDateTime(DateTime.UtcNow).Date;
+        var heartbeatDate = localDateTime.Date;
 
         if (heartbeatDate == today)
         {
-            return dateTime.ToString("HH:mm:ss");
+            return localDateTime.ToString("HH:mm:ss");
         }
 
         var daysAgo = (today - heartbeatDate).Days;
-        return $"{dateTime:HH:mm:ss} ({daysAgo}d ago)";
+        return $"{localDateTime:HH:mm:ss} ({daysAgo} day{(daysAgo == 1 ? string.Empty : "s")} ago)";
     }
 
-    private static string GetDateTimeTooltip(DateTime dateTime)
+    private string GetDateTimeTooltip(DateTime dateTime)
     {
-        var localTime = TimeZoneInfo.ConvertTimeFromUtc(dateTime, TimeZoneInfo.Local);
-        return $"UTC: {dateTime:yyyy-MM-dd HH:mm:ss}\nLocal: {localTime:yyyy-MM-dd HH:mm:ss}";
+        var utcDateTime = EnsureUtc(dateTime);
+        var localDateTime = GetUserDateTime(utcDateTime);
+        var localLabel = string.IsNullOrWhiteSpace(_browserTimeZoneId)
+            ? "Browser Local"
+            : _browserTimeZoneId;
+
+        return $"UTC: {utcDateTime:yyyy-MM-dd HH:mm:ss}\n{localLabel}: {localDateTime:yyyy-MM-dd HH:mm:ss}";
+    }
+
+    private DateTime GetUserDateTime(DateTime dateTime)
+    {
+        var utcDateTime = EnsureUtc(dateTime);
+
+        return _browserTimeZone is null
+            ? utcDateTime
+            : TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, _browserTimeZone);
+    }
+
+    private DateTime EnsureUtc(DateTime dateTime)
+    {
+        return dateTime.Kind == DateTimeKind.Utc
+            ? dateTime
+            : DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+    }
+
+    private TimeZoneInfo TryResolveTimeZone(string timeZoneId)
+    {
+        if (string.IsNullOrWhiteSpace(timeZoneId))
+        {
+            return null;
+        }
+
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+        }
+        catch (TimeZoneNotFoundException) when (OperatingSystem.IsWindows()
+            && TimeZoneInfo.TryConvertIanaIdToWindowsId(timeZoneId, out var windowsTimeZoneId))
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZoneId);
+        }
+        catch (InvalidTimeZoneException)
+        {
+            return null;
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return null;
+        }
     }
 
     public void Dispose()
