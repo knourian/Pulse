@@ -130,7 +130,7 @@ else
                                 {
                                     <div class="d-flex flex-column gap-2">
 
-                                        <div class="d-flex gap-1 flex-wrap">
+                                        <div class="d-flex gap-1">
 
                                             @foreach (var result in agentResult.Results.OrderByDescending(x => x.TimestampUtc))
                                             {
@@ -149,7 +149,7 @@ else
                                                     }
                                                     else
                                                     {
-                                                        <span class="badge text-bg-danger">
+                                                        <span class="badge text-bg-danger" title="@GetDateTimeTooltip(result.TimestampUtc)" >
                                                             Down
                                                         </span>
 
